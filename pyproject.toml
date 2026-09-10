@@ -1,0 +1,12 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/W: estilo pycodestyle · F: errores de pyflakes · I: orden de imports
+# B: bugs comunes (flake8-bugbear) · UP: sintaxis moderna de Python
+select = ["E", "W", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
