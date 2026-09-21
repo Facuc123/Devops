@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
+from app.api.routes_incidentes import router as incidentes_router
 from app.config import Settings, get_settings
 
 app = FastAPI(
@@ -14,6 +15,7 @@ app = FastAPI(
     version=get_settings().app_version,
     contact={"name": "Facundo Canto y Luciano Sicolo"},
 )
+app.include_router(incidentes_router)
 
 
 class HealthResponse(BaseModel):
