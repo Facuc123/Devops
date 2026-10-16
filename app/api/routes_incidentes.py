@@ -36,11 +36,26 @@ class IncidenteCrear(BaseModel):
 class IncidenteResponse(BaseModel):
     """Representación pública de un incidente."""
 
-    id: UUID
-    titulo: str
-    severidad: Severidad
-    descripcion: str
-    ocurrido_en: datetime
+    id: UUID = Field(
+        description="Identificador único del incidente.",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
+    )
+    titulo: str = Field(
+        description="Título descriptivo del incidente.",
+        examples=["Caída de la API"],
+    )
+    severidad: Severidad = Field(
+        description="Nivel de severidad del incidente.",
+        examples=[Severidad.SEV1],
+    )
+    descripcion: str = Field(
+        description="Detalle de lo ocurrido.",
+        examples=["El servicio devolvió errores 500."],
+    )
+    ocurrido_en: datetime = Field(
+        description="Fecha y hora en que ocurrió el incidente.",
+        examples=["2026-09-20T15:30:00Z"],
+    )
 
     @classmethod
     def desde_dominio(cls, incidente: Incidente) -> "IncidenteResponse":

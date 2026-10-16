@@ -7,15 +7,37 @@ from app.api.routes_incidentes import router as incidentes_router
 from app.api.routes_status import router as status_router
 from app.config import Settings, get_settings
 
+OPENAPI_TAGS = [
+    {
+        "name": "sistema",
+        "description": "Operaciones técnicas para comprobar la salud del servicio.",
+    },
+    {
+        "name": "incidentes",
+        "description": "Creación, consulta, listado y eliminación de incidentes.",
+    },
+    {
+        "name": "estado",
+        "description": ("Estado operativo calculado a partir del historial de incidentes."),
+    },
+]
+
 app = FastAPI(
-    title="dias-sin-incidentes",
+    title="API Días sin Incidentes",
     description=(
-        "El cartel de fábrica *'X días sin accidentes'*, pero para producción.\n\n"
-        "Registra incidentes y expone cuántos días lleva el sistema sin caerse."
+        "API REST para registrar incidentes y consultar el tiempo "
+        "transcurrido sin fallas.\n\n"
+        "Permite administrar incidentes clasificados como `SEV1`, "
+        "`SEV2` o `SEV3`, consultar el récord histórico y verificar "
+        "la salud del servicio."
     ),
     version=get_settings().app_version,
-    contact={"name": "Facundo Canto y Luciano Sicolo"},
+    contact={
+        "name": "Facundo Canto y Luciano Sicolo",
+    },
+    openapi_tags=OPENAPI_TAGS,
 )
+
 app.include_router(incidentes_router)
 app.include_router(status_router)
 
@@ -23,10 +45,22 @@ app.include_router(status_router)
 class HealthResponse(BaseModel):
     """Respuesta del chequeo de salud."""
 
-    status: str = Field(examples=["ok"])
-    servicio: str = Field(examples=["dias-sin-incidentes"])
-    version: str = Field(examples=["0.1.0"])
-    entorno: str = Field(examples=["local"])
+    status: str = Field(
+        description="Estado actual del servicio.",
+        examples=["ok"],
+    )
+    servicio: str = Field(
+        description="Nombre del servicio.",
+        examples=["dias-sin-incidentes"],
+    )
+    version: str = Field(
+        description="Versión actual de la API.",
+        examples=["0.1.0"],
+    )
+    entorno: str = Field(
+        description="Entorno donde se ejecuta la aplicación.",
+        examples=["local"],
+    )
 
 
 @app.get(
