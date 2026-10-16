@@ -1,3 +1,5 @@
+"""Contrato de persistencia de incidentes."""
+
 from typing import Protocol
 from uuid import UUID
 
@@ -9,7 +11,11 @@ class IncidenteRepository(Protocol):
 
     def crear(self, incidente: Incidente) -> Incidente: ...
 
-    def listar(self, offset: int = 0, limite: int = 20) -> list[Incidente]: ...
+    def listar(
+        self,
+        offset: int = 0,
+        limite: int | None = 20,
+    ) -> list[Incidente]: ...
 
     def obtener(self, incidente_id: UUID) -> Incidente | None: ...
 
