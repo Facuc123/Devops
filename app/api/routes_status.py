@@ -16,9 +16,20 @@ router = APIRouter(tags=["estado"])
 class StatusResponse(BaseModel):
     """Resumen del tiempo transcurrido sin incidentes."""
 
-    dias_sin_incidentes: int = Field(ge=0, examples=[12])
-    record_historico: int = Field(ge=0, examples=[47])
-    ultimo_incidente: IncidenteResponse | None = None
+    dias_sin_incidentes: int = Field(
+        ge=0,
+        description="Días transcurridos desde el último incidente.",
+        examples=[12],
+    )
+    record_historico: int = Field(
+        ge=0,
+        description="Mayor cantidad de días consecutivos sin incidentes.",
+        examples=[47],
+    )
+    ultimo_incidente: IncidenteResponse | None = Field(
+        default=None,
+        description="Último incidente registrado o null si todavía no existen incidentes.",
+    )
 
 
 @router.get(
