@@ -13,12 +13,20 @@ class MemoryIncidenteRepository:
         self._incidentes[incidente.id] = incidente
         return incidente
 
-    def listar(self, offset: int = 0, limite: int = 20) -> list[Incidente]:
+    def listar(
+        self,
+        offset: int = 0,
+        limite: int | None = 20,
+    ) -> list[Incidente]:
         incidentes = sorted(
             self._incidentes.values(),
             key=lambda incidente: incidente.ocurrido_en,
             reverse=True,
         )
+
+        if limite is None:
+            return incidentes[offset:]
+
         return incidentes[offset : offset + limite]
 
     def obtener(self, incidente_id: UUID) -> Incidente | None:
