@@ -1,7 +1,7 @@
 """Cálculos puros relacionados con incidentes."""
 
 from collections.abc import Iterable
-from datetime import date
+from datetime import UTC, date, datetime
 
 from app.domain.models import Incidente
 
@@ -12,7 +12,7 @@ def dias_sin_incidentes(
     hoy: date | None = None,
 ) -> int:
     """Calcula los días completos desde el último incidente."""
-    fecha_actual = hoy or date.today()
+    fecha_actual = hoy or datetime.now(UTC).date()
     lista = list(incidentes)
 
     if not lista:
@@ -29,7 +29,7 @@ def record_historico(
     hoy: date | None = None,
 ) -> int:
     """Calcula el mayor período registrado sin incidentes."""
-    fecha_actual = hoy or date.today()
+    fecha_actual = hoy or datetime.now(UTC).date()
     fechas = sorted(incidente.ocurrido_en.date() for incidente in incidentes)
 
     if not fechas:

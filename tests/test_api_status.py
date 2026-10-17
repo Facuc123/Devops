@@ -1,7 +1,7 @@
 """Pruebas de integración del endpoint de estado."""
 
 from collections.abc import Iterator
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,7 +16,7 @@ from app.repositories.memory import MemoryIncidenteRepository
 def client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[TestClient]:
-    inicio = date.today() - timedelta(days=10)
+    inicio = datetime.now(UTC).date() - timedelta(days=10)
     monkeypatch.setenv(
         "FECHA_INICIO_OPERACIONES",
         inicio.isoformat(),
