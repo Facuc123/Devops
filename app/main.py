@@ -76,7 +76,7 @@ class HealthResponse(BaseModel):
 def health() -> HealthResponse:
     settings: Settings = get_settings()
     return HealthResponse(
-        status="ok",
+        status="OK",
         servicio=settings.app_nombre,
         version=settings.app_version,
         entorno=settings.entorno,
