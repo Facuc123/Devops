@@ -55,7 +55,7 @@ class HealthResponse(BaseModel):
     )
     version: str = Field(
         description="Versión actual de la API.",
-        examples=["0.1.0"],
+        examples=["1.0.0"],
     )
     entorno: str = Field(
         description="Entorno donde se ejecuta la aplicación.",

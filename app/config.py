@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_nombre: str = "dias-sin-incidentes"
-    app_version: str = "0.1.0"
+    app_version: str = "1.0.0"
     entorno: str = "local"
 
     # Desde cuándo contamos si todavía no hubo ningún incidente registrado.
