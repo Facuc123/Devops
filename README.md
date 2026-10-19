@@ -1,4 +1,5 @@
 # Devops
+[![CI](https://github.com/Facuc123/Devops/actions/workflows/ci.yml/badge.svg)](https://github.com/Facuc123/Devops/actions/workflows/ci.yml)
 Trabajo práctico Devops - Universidad de Palermo - Integrantes: Facundo Canto y Luciano Sicolo
 ## Estrategia de versionado
 
