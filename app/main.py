@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
+from app.api.routes_chaos import router as chaos_router
 from app.api.routes_incidentes import router as incidentes_router
 from app.api.routes_status import router as status_router
 from app.config import Settings, get_settings
@@ -41,6 +42,7 @@ app = FastAPI(
 
 app.include_router(incidentes_router)
 app.include_router(status_router)
+app.include_router(chaos_router)
 
 app.middleware("http")(registrar_request)
 
