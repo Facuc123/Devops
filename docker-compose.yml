@@ -3,3 +3,27 @@ services:
     build: .
     ports:
       - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+
+  # Envía métricas y logs a Grafana Cloud. Se levanta solo con el perfil
+  # `observability` para que `docker compose up` siga funcionando sin credenciales:
+  #   docker compose --profile observability up --build
+  alloy:
+    image: grafana/alloy:v1.5.1
+    profiles: ["observability"]
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./observability/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "12345:12345"
+    depends_on:
+      - api

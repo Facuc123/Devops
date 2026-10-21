@@ -53,6 +53,7 @@ La aplicación fue desarrollada con FastAPI y ofrece los siguientes endpoints:
 | `GET` | `/incidentes/{id}` | Obtiene un incidente por su identificador |
 | `DELETE` | `/incidentes/{id}` | Elimina un incidente |
 | `POST` | `/chaos/boom` | Genera una respuesta 500 controlada |
+| `GET` | `/metrics` | Expone las métricas en formato Prometheus |
 | `GET` | `/docs` | Muestra la documentación interactiva de OpenAPI |
 
 El endpoint de caos está deshabilitado por defecto. Solo está disponible cuando
@@ -124,8 +125,9 @@ Los jobs de GitHub Actions entregan retroalimentación inmediata. Si Ruff,
 Pytest o la construcción de Docker fallan, el Pull Request queda bloqueado y
 no puede integrarse a `main`.
 
-La observabilidad incorporará métricas y logs centralizados en Grafana Cloud
-para detectar respuestas 5xx y aumentos de latencia.
+La API expone métricas en `/metrics` y Grafana Alloy las envía, junto con los
+logs, a Grafana Cloud. El dashboard de Golden Signals permite detectar
+respuestas 5xx y aumentos de latencia.
 
 ### Tercera Forma: aprendizaje continuo
 
@@ -158,19 +160,79 @@ computadoras de los integrantes y el entorno de CI.
 
 ## Observabilidad
 
+### Logs
+
 La aplicación genera logs estructurados en formato JSON con información como
 fecha, nivel, método HTTP, ruta, código de estado, duración e identificador de
-la solicitud.
+la solicitud (`X-Request-ID`).
 
-La incorporación de `/metrics`, el envío de datos a Grafana Cloud y el
-dashboard de las Golden Signals se encuentran en desarrollo. Cuando estén
-terminados, esta sección incluirá:
+### Métricas
 
-- Tráfico medido en solicitudes por minuto.
+El endpoint `/metrics` expone, en formato Prometheus, las métricas necesarias
+para las Golden Signals:
+
+| Métrica | Tipo | Labels | Golden Signal |
+|---|---|---|---|
+| `http_requests_total` | Counter | `method`, `route`, `status_code` | Tráfico y errores |
+| `http_request_duration_seconds` | Histogram | `method`, `route` | Latencia |
+| `http_requests_in_progress` | Gauge | `method` | Saturación |
+| `app_info` | Gauge | `servicio`, `version`, `entorno` | Versión desplegada |
+
+El label `route` usa la plantilla de la ruta (`/incidentes/{incidente_id}`) y
+no la URL real, para que cada UUID no genere una serie nueva. Las rutas
+inexistentes se agrupan en `sin_ruta` y `/metrics` no se mide a sí mismo.
+
+### Envío a Grafana Cloud
+
+[Grafana Alloy](https://grafana.com/docs/alloy/) consulta `/metrics` cada 15
+segundos y lee los logs del contenedor de la API. Envía las métricas a
+Prometheus y los logs a Loki en Grafana Cloud. La configuración está en
+[`observability/config.alloy`](observability/config.alloy).
+
+1. Copiar `.env.example` a `.env` y completar las variables `GRAFANA_CLOUD_*`
+   con los datos del stack (grafana.com > stack > Prometheus / Loki >
+   *Details*). El token es un *Access Policy token* con permisos
+   `metrics:write` y `logs:write`.
+2. Levantar la API junto con Alloy:
+
+   ```bash
+   docker compose --profile observability up --build
+   ```
+
+3. Verificar el estado de Alloy en `http://localhost:12345`.
+
+Sin el perfil `observability`, `docker compose up` levanta solo la API y no
+requiere credenciales.
+
+### Dashboard de Golden Signals
+
+El archivo
+[`observability/dashboard-golden-signals.json`](observability/dashboard-golden-signals.json)
+se importa en Grafana (*Dashboards > New > Import*) y muestra:
+
+- Tráfico en solicitudes por minuto, total y por ruta.
 - Latencia en percentiles p50 y p95.
-- Cantidad de respuestas 4xx y 5xx.
-- Consulta y visualización de logs.
-- Evidencia del experimento realizado con `/chaos/boom`.
+- Respuestas 4xx y 5xx, y errores 5xx por ruta.
+- Solicitudes en curso.
+- Logs de error de la API desde Loki.
+
+### Alertas sugeridas
+
+| Alerta | Consulta PromQL | Condición |
+|---|---|---|
+| Tasa de 5xx alta | `sum(rate(http_requests_total{job="dias-sin-incidentes",status_code=~"5.."}[5m])) / sum(rate(http_requests_total{job="dias-sin-incidentes"}[5m]))` | `> 0.05` durante 2 min |
+| Latencia p95 alta | `histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job="dias-sin-incidentes"}[5m])))` | `> 0.5` durante 5 min |
+
+### Experimento con `/chaos/boom`
+
+Con `CHAOS_ENABLED=true`, el siguiente comando genera 50 respuestas 500 que
+deben verse en el panel de errores 5xx y disparar la alerta de tasa de 5xx:
+
+```bash
+for i in $(seq 1 50); do curl -s -o /dev/null -X POST localhost:8000/chaos/boom; done
+```
+
+Los resultados del experimento se documentarán con capturas del dashboard.
 
 > Los tokens y credenciales de Grafana Cloud y Docker Hub no se almacenan en
 > este repositorio.

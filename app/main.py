@@ -1,6 +1,6 @@
 """Punto de entrada de la API dias-sin-incidentes."""
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from pydantic import BaseModel, Field
 
 from app.api.routes_chaos import router as chaos_router
@@ -8,6 +8,11 @@ from app.api.routes_incidentes import router as incidentes_router
 from app.api.routes_status import router as status_router
 from app.config import Settings, get_settings
 from app.observability.logging import registrar_request
+from app.observability.metrics import (
+    exponer_metricas,
+    registrar_info_app,
+    registrar_metricas,
+)
 
 OPENAPI_TAGS = [
     {
@@ -44,7 +49,10 @@ app.include_router(incidentes_router)
 app.include_router(status_router)
 app.include_router(chaos_router)
 
+app.middleware("http")(registrar_metricas)
 app.middleware("http")(registrar_request)
+
+registrar_info_app()
 
 
 class HealthResponse(BaseModel):
@@ -86,3 +94,18 @@ def health() -> HealthResponse:
         version=settings.app_version,
         entorno=settings.entorno,
     )
+
+
+@app.get(
+    "/metrics",
+    tags=["sistema"],
+    summary="Métricas Prometheus",
+    description=(
+        "Expone tráfico, errores y latencia en formato Prometheus. Lo consulta "
+        "Grafana Alloy para enviar las métricas a Grafana Cloud."
+    ),
+    response_class=Response,
+    responses={200: {"content": {"text/plain": {}}}},
+)
+def metrics() -> Response:
+    return exponer_metricas()

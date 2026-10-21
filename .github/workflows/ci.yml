@@ -68,3 +68,9 @@ jobs:
           done
           docker logs api
           exit 1
+
+      - name: smoke test de /metrics
+        run: |
+          curl -fs localhost:8000/health > /dev/null
+          curl -fs localhost:8000/metrics | tee metrics.txt | head -20
+          grep -q 'http_requests_total{method="GET",route="/health",status_code="200"}' metrics.txt

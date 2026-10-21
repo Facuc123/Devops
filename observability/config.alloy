@@ -1,0 +1,77 @@
+// Grafana Alloy: envía las métricas de /metrics y los logs JSON del contenedor
+// de la API a Grafana Cloud. Las credenciales llegan por variables de entorno
+// (ver .env.example); nunca se escriben en este archivo.
+
+// ---------- Métricas ----------
+
+prometheus.scrape "api" {
+  targets = [{
+    __address__ = "api:8000",
+    job         = "dias-sin-incidentes",
+  }]
+  metrics_path    = "/metrics"
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_PROMETHEUS_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_PROMETHEUS_USER")
+      password = sys.env("GRAFANA_CLOUD_API_TOKEN")
+    }
+  }
+}
+
+// ---------- Logs ----------
+
+discovery.docker "contenedores" {
+  host = "unix:///var/run/docker.sock"
+
+  filter {
+    name   = "label"
+    values = ["com.docker.compose.service=api"]
+  }
+}
+
+discovery.relabel "api" {
+  targets = discovery.docker.contenedores.targets
+
+  rule {
+    target_label = "job"
+    replacement  = "dias-sin-incidentes"
+  }
+}
+
+loki.source.docker "api" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.api.output
+  forward_to = [loki.process.json.receiver]
+}
+
+// Los logs ya son JSON: solo se promueve `level` a label (baja cardinalidad).
+// status_code, path y request_id se consultan con `| json` en LogQL.
+loki.process "json" {
+  stage.json {
+    expressions = { level = "level" }
+  }
+
+  stage.labels {
+    values = { level = "" }
+  }
+
+  forward_to = [loki.write.grafana_cloud.receiver]
+}
+
+loki.write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_LOKI_USER")
+      password = sys.env("GRAFANA_CLOUD_API_TOKEN")
+    }
+  }
+}
