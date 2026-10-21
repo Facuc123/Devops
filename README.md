@@ -124,7 +124,7 @@ Los jobs de GitHub Actions entregan retroalimentación inmediata. Si Ruff,
 Pytest o la construcción de Docker fallan, el Pull Request queda bloqueado y
 no puede integrarse a `main`.
 
-La observabilidad incorporará métricas y logs centralizados en Grafana Cloud
+La observabilidad incorpora métricas y logs centralizados en Grafana Cloud
 para detectar respuestas 5xx y aumentos de latencia.
 
 ### Tercera Forma: aprendizaje continuo
@@ -135,9 +135,9 @@ de protección y observabilidad funcionen correctamente:
 - Se creó un Pull Request con una prueba rota intencionalmente para demostrar
   que la integración queda bloqueada.
 - El endpoint `/chaos/boom` permite provocar una respuesta HTTP 500 controlada.
-- Los resultados del experimento de observabilidad se documentarán cuando la
-  integración con Grafana Cloud esté finalizada.
-
+- El experimento confirmó que las respuestas 500 aparecen correctamente en las
+  métricas y los logs centralizados de Grafana Cloud.
+  
 ## Desperdicios Lean reducidos
 
 ### Defectos detectados tarde
@@ -158,19 +158,22 @@ computadoras de los integrantes y el entorno de CI.
 
 ## Observabilidad
 
-La aplicación genera logs estructurados en formato JSON con información como
-fecha, nivel, método HTTP, ruta, código de estado, duración e identificador de
-la solicitud.
+La aplicación genera métricas Prometheus y logs estructurados en formato JSON.
+Grafana Alloy recolecta esta información y la envía a Grafana Cloud.
 
-La incorporación de `/metrics`, el envío de datos a Grafana Cloud y el
-dashboard de las Golden Signals se encuentran en desarrollo. Cuando estén
-terminados, esta sección incluirá:
+El dashboard permite visualizar:
 
-- Tráfico medido en solicitudes por minuto.
+- Solicitudes HTTP por minuto.
 - Latencia en percentiles p50 y p95.
-- Cantidad de respuestas 4xx y 5xx.
-- Consulta y visualización de logs.
-- Evidencia del experimento realizado con `/chaos/boom`.
+- Respuestas HTTP 4xx y 5xx.
+- Logs centralizados de la API.
 
-> Los tokens y credenciales de Grafana Cloud y Docker Hub no se almacenan en
-> este repositorio.
+Para validar el monitoreo se habilitó temporalmente el endpoint
+`POST /chaos/boom`. La falla controlada produjo respuestas HTTP 500 que fueron
+detectadas correctamente en las métricas y los logs. Finalizado el experimento,
+el modo caos volvió a desactivarse.
+
+![Dashboard de observabilidad](docs/evidencias/grafana-dashboard.png)
+
+Las credenciales de Grafana Cloud y Docker Hub se administran mediante variables
+de entorno y GitHub Secrets, y no se incluyen en el repositorio.
