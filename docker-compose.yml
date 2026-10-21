@@ -3,3 +3,26 @@ services:
     build: .
     ports:
       - "8000:8000"
+    environment:
+      CHAOS_ENABLED: ${CHAOS_ENABLED:-false}
+
+  alloy:
+    image: grafana/alloy:v1.9.1
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./observability/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      PROMETHEUS_REMOTE_WRITE_URL: ${PROMETHEUS_REMOTE_WRITE_URL}
+      PROMETHEUS_USERNAME: ${PROMETHEUS_USERNAME}
+      PROMETHEUS_TOKEN: ${PROMETHEUS_TOKEN}
+      LOKI_PUSH_URL: ${LOKI_PUSH_URL}
+      LOKI_USERNAME: ${LOKI_USERNAME}
+      LOKI_TOKEN: ${LOKI_TOKEN}
+    ports:
+      - "12345:12345"
+    depends_on:
+      - api
