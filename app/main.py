@@ -8,6 +8,8 @@ from app.api.routes_incidentes import router as incidentes_router
 from app.api.routes_status import router as status_router
 from app.config import Settings, get_settings
 from app.observability.logging import registrar_request
+from app.observability.metrics import registrar_metricas
+from app.observability.metrics import router as metrics_router
 
 OPENAPI_TAGS = [
     {
@@ -43,8 +45,11 @@ app = FastAPI(
 app.include_router(incidentes_router)
 app.include_router(status_router)
 app.include_router(chaos_router)
+app.include_router(metrics_router)
+
 
 app.middleware("http")(registrar_request)
+app.middleware("http")(registrar_metricas)
 
 
 class HealthResponse(BaseModel):
